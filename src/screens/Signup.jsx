@@ -6,17 +6,22 @@ import { useApp } from '../context/AppContext';
 
 export default function Signup() {
   const navigate = useNavigate();
-  const { setIsAuthed } = useApp();
+  const { register, setIsAuthed } = useApp();
   const [form, setForm] = useState({ name: '', phone: '', email: '', password: '', confirm: '' });
   const [agree, setAgree] = useState(false);
   const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const update = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!form.name || !form.phone || !form.password) {
+    if (!form.name.trim() || !form.phone.trim() || !form.password) {
       setError('Fill in your name, phone number and password to continue.');
+      return;
+    }
+    if (form.password.length < 6) {
+      setError('Password must be at least 6 characters long.');
       return;
     }
     if (form.password !== form.confirm) {
@@ -27,8 +32,19 @@ export default function Signup() {
       setError('Please accept the Terms & Privacy Policy to continue.');
       return;
     }
+
     setError('');
-    navigate('/loading?next=/otp&mode=signup');
+    setSubmitting(true);
+
+    const res = register(form);
+    if (!res.success) {
+      setError(res.message || 'Could not complete registration. Please try again.');
+      setSubmitting(false);
+      return;
+    }
+
+    // Successfully registered and authenticated! Take directly to Home screen
+    navigate('/home', { replace: true });
   };
 
   return (
@@ -76,8 +92,8 @@ export default function Signup() {
           I agree to the Terms of Service and Privacy Policy
         </label>
 
-        <PrimaryButton type="submit" className="mt-2">
-          Sign Up
+        <PrimaryButton type="submit" disabled={submitting} className="mt-2">
+          {submitting ? 'Creating account…' : 'Sign Up'}
         </PrimaryButton>
       </form>
 

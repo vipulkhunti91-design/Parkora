@@ -14,25 +14,41 @@ const ROWS = [
 
 export default function Profile() {
   const navigate = useNavigate();
-  const { user, setIsAuthed } = useApp();
+  const { user, logout } = useApp();
 
   const handleLogout = () => {
-    setIsAuthed(false);
-    navigate('/login');
+    logout();
+    navigate('/login', { replace: true });
   };
+
+  const avatarUrl = user?.picture || user?.photo;
 
   return (
     <PhoneShell>
       <div className="px-4 pt-6 pb-4 flex items-center gap-4">
         <div
-          className="rounded-full flex items-center justify-center text-2xl shrink-0"
+          className="rounded-full flex items-center justify-center text-2xl shrink-0 overflow-hidden border border-white/20"
           style={{ width: 64, height: 64, background: 'var(--color-panel)' }}
         >
-          🙂
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt={user.name || 'Profile'}
+              className="w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+            />
+          ) : (
+            <span>🙂</span>
+          )}
         </div>
         <div className="min-w-0">
-          <p className="text-white font-display font-bold text-lg truncate">{user.name}</p>
-          <p className="text-white/60 text-sm truncate">+91 {user.phone}</p>
+          <p className="text-white font-display font-bold text-lg truncate">{user?.name || 'Sana Mehta'}</p>
+          <p className="text-white/60 text-sm truncate">
+            {user?.email || (user?.phone ? `+91 ${user.phone}` : 'sana.mehta.demo@gmail.com')}
+          </p>
         </div>
       </div>
 
@@ -41,7 +57,7 @@ export default function Profile() {
           <button
             key={r.key}
             onClick={() => navigate(r.path)}
-            className="flex items-center gap-3 rounded-2xl px-4 py-3.5 text-left"
+            className="flex items-center gap-3 rounded-2xl px-4 py-3.5 text-left transition active:scale-[0.99]"
             style={{ background: 'var(--color-panel)' }}
           >
             <span className="text-lg shrink-0">{r.icon}</span>
@@ -52,7 +68,7 @@ export default function Profile() {
 
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 rounded-2xl px-4 py-3.5 text-left mt-2"
+          className="flex items-center gap-3 rounded-2xl px-4 py-3.5 text-left mt-2 transition active:scale-[0.99]"
           style={{ background: 'rgba(255,80,80,0.15)' }}
         >
           <span className="text-lg shrink-0">🚪</span>

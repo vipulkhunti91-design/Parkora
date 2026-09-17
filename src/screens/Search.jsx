@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PhoneShell from '../components/PhoneShell';
-import { IconArrowLeft, IconSearch, IconPin } from '../components/icons';
+import BottomNav from '../components/BottomNav';
+import { IconArrowLeft, IconSearch, IconBell, IconPin } from '../components/icons';
 import ParkingCard from '../components/ParkingCard';
 import { parkingSpots, recentSearches } from '../data/mockData';
 
@@ -18,8 +19,8 @@ export default function Search() {
   const showEmpty = query.trim() && results.length === 0;
 
   return (
-    <PhoneShell>
-      <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+    <PhoneShell className="flex flex-col">
+      <div className="flex items-center gap-3 px-4 pt-4 pb-2 shrink-0">
         <button
           onClick={() => navigate(-1)}
           aria-label="Go back"
@@ -34,29 +35,37 @@ export default function Search() {
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search parking, address, area…"
+            placeholder="Search"
             className="flex-1 bg-transparent outline-none text-white placeholder-white/50 text-sm"
           />
         </div>
+        <button
+          onClick={() => navigate('/notifications')}
+          aria-label="Notifications"
+          className="flex items-center justify-center rounded-full shrink-0"
+          style={{ width: 37, height: 37, background: 'var(--color-panel)' }}
+        >
+          <IconBell className="text-white" />
+        </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-6">
+      <div className="flex-1 overflow-y-auto no-scrollbar px-4 pb-4">
         {!query.trim() && (
-          <>
-            <h2 className="text-white/80 text-sm font-semibold mt-3 mb-2">Recent searches</h2>
-            <div className="flex flex-col gap-1">
+          <div className="mt-4 rounded-3xl p-4 border border-white/10" style={{ background: 'var(--color-panel)' }}>
+            <h2 className="text-white font-display text-sm font-semibold mb-3">Recent history</h2>
+            <div className="flex flex-col gap-2">
               {recentSearches.map((r) => (
                 <button
                   key={r}
                   onClick={() => setQuery(r)}
-                  className="flex items-center gap-3 py-2.5 text-left text-white/90 text-sm border-b border-white/10"
+                  className="flex items-center gap-3 py-2 text-left text-white/90 text-sm transition hover:text-white"
                 >
-                  <IconPin className="text-white/50 shrink-0" />
-                  {r}
+                  <IconPin className="text-white/60 shrink-0" />
+                  <span className="truncate">{r}</span>
                 </button>
               ))}
             </div>
-          </>
+          </div>
         )}
 
         {query.trim() && !showEmpty && (
@@ -80,6 +89,8 @@ export default function Search() {
           </div>
         )}
       </div>
+
+      <BottomNav active="booking" />
     </PhoneShell>
   );
 }

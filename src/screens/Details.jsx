@@ -54,7 +54,25 @@ export default function Details() {
           <span className="text-white text-xs font-medium">{spot.hours}</span>
         </div>
 
-        <h2 className="text-white font-semibold text-sm mt-5 mb-2">Amenities</h2>
+        {/* Security and Office Info matching Figma Screen 27 */}
+        <div className="grid grid-cols-2 gap-2 mt-3">
+          <div className="rounded-xl p-2.5" style={{ background: 'var(--color-panel)' }}>
+            <p className="text-[10px] text-white/60">Security Guard</p>
+            <p className="text-white text-xs font-semibold mt-0.5 truncate">{spot.security?.guard || 'Raj Singh'}</p>
+            <a href={`tel:${spot.security?.guardPhone || '9876543210'}`} className="text-[10px] text-blue-300 hover:underline block mt-0.5">
+              {spot.security?.guardPhone || '9876543210'}
+            </a>
+          </div>
+          <div className="rounded-xl p-2.5" style={{ background: 'var(--color-panel)' }}>
+            <p className="text-[10px] text-white/60">Parking Office</p>
+            <p className="text-white text-xs font-semibold mt-0.5">Control Desk</p>
+            <a href={`tel:${spot.security?.officeNumber || '8741265980'}`} className="text-[10px] text-blue-300 hover:underline block mt-0.5">
+              {spot.security?.officeNumber || '8741265980'}
+            </a>
+          </div>
+        </div>
+
+        <h2 className="text-white font-semibold text-sm mt-4 mb-2">Amenities</h2>
         <div className="grid grid-cols-2 gap-2">
           {spot.amenities.map((a) => (
             <div key={a.label} className="flex items-center gap-2 rounded-xl px-3 py-2.5" style={{ background: 'var(--color-panel)' }}>
