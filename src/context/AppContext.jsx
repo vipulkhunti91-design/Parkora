@@ -90,12 +90,17 @@ export function AppProvider({ children }) {
   const [rememberMe, setRememberMe] = useState(true);
   const [language, setLanguage] = useState('en');
 
+  const getMissingConfigMessage = () => {
+    const isVercel = typeof window !== 'undefined' && window.location.hostname.includes('vercel.app');
+    return isVercel
+      ? 'Firebase credentials missing on Vercel. Please add VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, and VITE_FIREBASE_PROJECT_ID in your Vercel Project Settings > Environment Variables, then redeploy.'
+      : 'Firebase configuration is missing. Please add VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, and VITE_FIREBASE_PROJECT_ID to your .env file.';
+  };
+
   // 1. Google Login via Real Firebase OAuth (Popup on accounts.google.com)
   const loginWithGoogle = async () => {
     if (!isFirebaseConfigured) {
-      throw new Error(
-        'Firebase configuration is missing. Please add VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, and VITE_FIREBASE_PROJECT_ID to your .env file.'
-      );
+      throw new Error(getMissingConfigMessage());
     }
     const fbUser = await signInWithGoogleFirebase();
     setUser(fbUser);
@@ -107,9 +112,7 @@ export function AppProvider({ children }) {
   // 2. Apple Login via Firebase OAuth
   const loginWithApple = async () => {
     if (!isFirebaseConfigured) {
-      throw new Error(
-        'Firebase configuration is missing. Please add VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, and VITE_FIREBASE_PROJECT_ID to your .env file.'
-      );
+      throw new Error(getMissingConfigMessage());
     }
     const fbUser = await signInWithAppleFirebase();
     setUser(fbUser);
@@ -121,9 +124,7 @@ export function AppProvider({ children }) {
   // 3. Twitter Login via Firebase OAuth
   const loginWithTwitter = async () => {
     if (!isFirebaseConfigured) {
-      throw new Error(
-        'Firebase configuration is missing. Please add VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, and VITE_FIREBASE_PROJECT_ID to your .env file.'
-      );
+      throw new Error(getMissingConfigMessage());
     }
     const fbUser = await signInWithTwitterFirebase();
     setUser(fbUser);

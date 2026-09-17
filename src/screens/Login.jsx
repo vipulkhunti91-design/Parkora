@@ -112,8 +112,16 @@ export default function Login() {
         />
 
         {error && (
-          <div className="p-3 rounded-xl bg-red-500/20 border border-red-500/30 text-red-200 text-xs leading-relaxed -mt-1">
-            {error}
+          <div className="p-3 rounded-xl bg-red-500/20 border border-red-500/30 text-red-200 text-xs leading-relaxed -mt-1 flex items-start justify-between gap-2">
+            <span className="flex-1">{error}</span>
+            <button
+              type="button"
+              onClick={() => setError('')}
+              className="text-red-300 hover:text-white font-bold text-sm leading-none shrink-0 p-0.5"
+              aria-label="Dismiss error"
+            >
+              ✕
+            </button>
           </div>
         )}
 
