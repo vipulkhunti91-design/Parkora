@@ -147,20 +147,72 @@ export default function Home() {
           <div className="relative w-full rounded-2xl overflow-hidden shadow-md" style={{ height: 160 }}>
             <button
               onClick={() => navigate(`/direction/${parkingSpots[0].id}`)}
-              className="w-full h-full block text-left"
+              className="w-full h-full block relative text-left select-none cursor-pointer"
               aria-label="Open interactive map"
             >
-              <img
-                src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=900&q=80"
-                alt="Map showing nearby parking locations"
-                className="w-full h-full object-cover"
-              />
-              <div
-                className="absolute inset-0"
-                style={{
-                  background: 'linear-gradient(180deg, rgba(3,27,50,0.1), rgba(3,27,50,0.45))',
-                }}
-              />
+              {/* High-fidelity city street map matching Figma Screen 79 */}
+              <svg viewBox="0 0 360 160" className="w-full h-full" preserveAspectRatio="xMidYMid slice">
+                {/* Background land */}
+                <rect width="360" height="160" fill="#f2efe9" />
+
+                {/* Green park & garden areas */}
+                <path d="M 0,0 L 95,0 L 80,45 L 30,55 L 0,35 Z" fill="#d9ebd0" />
+                <path d="M 120,0 L 220,0 L 210,30 L 140,25 Z" fill="#e0eed7" />
+                <path d="M 0,110 L 60,95 L 85,135 L 0,160 Z" fill="#e3eedb" />
+                <path d="M 270,90 L 360,85 L 360,160 L 250,160 Z" fill="#d6e8cc" />
+
+                {/* Major Highway / Trunk Roads (Warm gold) */}
+                <path d="M -10,65 Q 160,50 370,80" fill="none" stroke="#fbdba6" strokeWidth="8" />
+                <path d="M 230,-10 L 210,170" fill="none" stroke="#fbdba6" strokeWidth="7" />
+
+                {/* City Secondary Roads (White with border) */}
+                <path d="M -10,35 L 370,40" fill="none" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" />
+                <path d="M -10,115 L 370,110" fill="none" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" />
+                <path d="M 85,-10 L 105,170" fill="none" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" />
+                <path d="M 155,-10 L 145,170" fill="none" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" />
+                <path d="M 290,-10 L 295,170" fill="none" stroke="#ffffff" strokeWidth="5" strokeLinecap="round" />
+
+                {/* Connectors & Local Streets */}
+                <path d="M 20,35 L 45,115 M 105,40 L 150,75 L 145,112 M 215,65 L 290,60" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" />
+                <path d="M 190,110 L 240,160 M 310,40 L 360,65" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" />
+
+                {/* Parking Pins 'P' with labels matching Figma Screen 79 */}
+                {/* 1. Science City Parking */}
+                <g transform="translate(68, 38)">
+                  <circle cx="0" cy="0" r="8" fill="#ffffff" stroke="#1d4ed8" strokeWidth="2" filter="drop-shadow(0px 1px 2px rgba(0,0,0,0.15))" />
+                  <text x="0" y="3" textAnchor="middle" fill="#1d4ed8" fontSize="8" fontWeight="bold" fontFamily="sans-serif">P</text>
+                  <text x="11" y="3" fill="#334155" fontSize="6.5" fontWeight="600" fontFamily="sans-serif">Science City</text>
+                </g>
+
+                {/* 2. Sola Public Parking (Active) */}
+                <g transform="translate(175, 48)">
+                  <circle cx="0" cy="0" r="10" fill="#2563eb" stroke="#ffffff" strokeWidth="2" filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.25))" />
+                  <text x="0" y="3.5" textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="bold" fontFamily="sans-serif">P</text>
+                  <rect x="-2" y="13" width="56" height="12" rx="3" fill="#1e293b" opacity="0.85" />
+                  <text x="26" y="21.5" textAnchor="middle" fill="#ffffff" fontSize="6" fontWeight="bold" fontFamily="sans-serif">Sola P:123</text>
+                </g>
+
+                {/* 3. MK Car Parking */}
+                <g transform="translate(118, 92)">
+                  <circle cx="0" cy="0" r="8" fill="#ffffff" stroke="#1d4ed8" strokeWidth="2" filter="drop-shadow(0px 1px 2px rgba(0,0,0,0.15))" />
+                  <text x="0" y="3" textAnchor="middle" fill="#1d4ed8" fontSize="8" fontWeight="bold" fontFamily="sans-serif">P</text>
+                  <text x="11" y="3" fill="#334155" fontSize="6.5" fontWeight="600" fontFamily="sans-serif">MK Parking</text>
+                </g>
+
+                {/* 4. AMC Multi Storey */}
+                <g transform="translate(235, 125)">
+                  <circle cx="0" cy="0" r="8" fill="#ffffff" stroke="#1d4ed8" strokeWidth="2" filter="drop-shadow(0px 1px 2px rgba(0,0,0,0.15))" />
+                  <text x="0" y="3" textAnchor="middle" fill="#1d4ed8" fontSize="8" fontWeight="bold" fontFamily="sans-serif">P</text>
+                  <text x="11" y="3" fill="#334155" fontSize="6.5" fontWeight="600" fontFamily="sans-serif">AMC Parking</text>
+                </g>
+
+                {/* 5. Atal Bridge Riverfront */}
+                <g transform="translate(305, 52)">
+                  <circle cx="0" cy="0" r="8" fill="#ffffff" stroke="#1d4ed8" strokeWidth="2" filter="drop-shadow(0px 1px 2px rgba(0,0,0,0.15))" />
+                  <text x="0" y="3" textAnchor="middle" fill="#1d4ed8" fontSize="8" fontWeight="bold" fontFamily="sans-serif">P</text>
+                  <text x="-4" y="13" textAnchor="end" fill="#334155" fontSize="6.5" fontWeight="600" fontFamily="sans-serif">Atal Bridge</text>
+                </g>
+              </svg>
             </button>
 
             {/* Floating SOS button */}
