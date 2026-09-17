@@ -6,7 +6,7 @@ import { useApp } from '../context/AppContext';
 
 export default function Signup() {
   const navigate = useNavigate();
-  const { register, setIsAuthed } = useApp();
+  const { register, skipAsGuest } = useApp();
   const [form, setForm] = useState({ name: '', phone: '', email: '', password: '', confirm: '' });
   const [agree, setAgree] = useState(false);
   const [error, setError] = useState('');
@@ -14,10 +14,14 @@ export default function Signup() {
 
   const update = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.phone.trim() || !form.password) {
-      setError('Fill in your name, phone number and password to continue.');
+    if (!form.name.trim() || !form.phone.trim() || !form.email.trim() || !form.password) {
+      setError('Please fill in all required fields to continue.');
+      return;
+    }
+    if (!form.email.includes('@')) {
+      setError('Please enter a valid email address.');
       return;
     }
     if (form.password.length < 6) {
@@ -36,25 +40,35 @@ export default function Signup() {
     setError('');
     setSubmitting(true);
 
-    const res = register(form);
-    if (!res.success) {
-      setError(res.message || 'Could not complete registration. Please try again.');
+    try {
+      // Register with Firebase authentication
+      await register(form);
+      // Navigate to OTP verification step as required
+      navigate('/otp', { state: { phone: form.phone, name: form.name } });
+    } catch (err) {
+      console.error('Registration error:', err);
+      let msg = err.message || 'Could not complete registration. Please try again.';
+      if (err.code === 'auth/email-already-in-use') {
+        msg = 'This email is already registered. Please log in instead.';
+      } else if (err.code === 'auth/weak-password') {
+        msg = 'Password is too weak. Use at least 6 letters and numbers.';
+      }
+      setError(msg);
       setSubmitting(false);
-      return;
     }
-
-    // Successfully registered and authenticated! Take directly to Home screen
-    navigate('/home', { replace: true });
   };
 
   return (
     <PhoneShell className="px-6 pt-10 pb-8 overflow-y-auto no-scrollbar">
-      {/* Skip button */}
+      {/* Skip button — takes user directly to Home as a guest */}
       <div className="flex justify-end mb-4">
         <button
           type="button"
-          onClick={() => { setIsAuthed(true); navigate('/home', { replace: true }); }}
-          className="text-white/80 text-sm font-semibold px-4 py-1.5 rounded-full border border-white/30 hover:bg-white/10 transition"
+          onClick={() => {
+            skipAsGuest();
+            navigate('/home', { replace: true });
+          }}
+          className="text-white/80 text-sm font-semibold px-4 py-1.5 rounded-full border border-white/30 hover:bg-white/10 transition active:scale-95"
         >
           Skip →
         </button>
@@ -66,7 +80,12 @@ export default function Signup() {
       <p className="text-white/70 text-sm mt-2 mb-6">It only takes a minute to start booking parking.</p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
-        <TextField label="Full name" placeholder="Enter full name" value={form.name} onChange={update('name')} />
+        <TextField
+          label="Full name"
+          placeholder="Enter full name"
+          value={form.name}
+          onChange={update('name')}
+        />
         <TextField
           label="Phone number"
           type="tel"
@@ -75,8 +94,20 @@ export default function Signup() {
           value={form.phone}
           onChange={update('phone')}
         />
-        <TextField label="Email (optional)" type="email" placeholder="Enter email" value={form.email} onChange={update('email')} />
-        <TextField label="Password" type="password" placeholder="Create password" value={form.password} onChange={update('password')} />
+        <TextField
+          label="Email address"
+          type="email"
+          placeholder="Enter email address"
+          value={form.email}
+          onChange={update('email')}
+        />
+        <TextField
+          label="Password"
+          type="password"
+          placeholder="Create password"
+          value={form.password}
+          onChange={update('password')}
+        />
         <TextField
           label="Confirm password"
           type="password"
@@ -85,10 +116,19 @@ export default function Signup() {
           onChange={update('confirm')}
         />
 
-        {error && <p className="text-[13px] text-red-300">{error}</p>}
+        {error && (
+          <div className="p-3 rounded-xl bg-red-500/20 border border-red-500/30 text-red-200 text-xs leading-relaxed">
+            {error}
+          </div>
+        )}
 
-        <label className="flex items-start gap-2 text-xs text-white/80 mt-1">
-          <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} className="accent-white mt-0.5" />
+        <label className="flex items-start gap-2 text-xs text-white/80 mt-1 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={agree}
+            onChange={(e) => setAgree(e.target.checked)}
+            className="accent-white mt-0.5"
+          />
           I agree to the Terms of Service and Privacy Policy
         </label>
 

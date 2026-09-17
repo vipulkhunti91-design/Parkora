@@ -1,173 +1,232 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import PhoneShell from '../components/PhoneShell';
 import { parkingSpots } from '../data/mockData';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Coordinates for parking spots (Ahmedabad, Gujarat area matching mock addresses)
+const SPOT_COORDINATES = {
+  p_mk: [23.0489, 72.5321],
+  p_rbmehta: [23.0512, 72.492],
+  p_atal: [23.0258, 72.5768],
+  p_amc: [23.027, 72.583],
+};
+
+// Default user starting location (nearby in Ahmedabad)
+const USER_LOCATION = [23.0338, 72.565];
 
 export default function Direction() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const mapContainerRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const [routeInfo, setRouteInfo] = useState({ distance: '2.4 km', time: '8 min' });
+
   const spot = parkingSpots.find((s) => s.id === id) || parkingSpots[0];
+  const destCoords = useMemo(
+    () => SPOT_COORDINATES[spot.id] || [23.0489, 72.5321],
+    [spot.id]
+  );
+
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+    if (mapInstanceRef.current) return;
+
+    // Create interactive Leaflet map
+    const map = L.map(mapContainerRef.current, {
+      center: USER_LOCATION,
+      zoom: 14,
+      zoomControl: false, // Custom placed zoom controls
+    });
+
+    mapInstanceRef.current = map;
+
+    // OpenStreetMap high-contrast / clean tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors',
+    }).addTo(map);
+
+    // Custom Current Location Marker (blue pulsing GPS marker)
+    const userMarkerIcon = L.divIcon({
+      className: 'custom-gps-marker',
+      html: `
+        <div style="position: relative; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+          <div style="position: absolute; width: 30px; height: 30px; background: rgba(37, 99, 235, 0.35); border-radius: 50%; animation: pulse 2s infinite;"></div>
+          <div style="width: 14px; height: 14px; background: #2563eb; border: 2.5px solid #ffffff; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>
+        </div>
+      `,
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+    });
+
+    L.marker(USER_LOCATION, { icon: userMarkerIcon })
+      .addTo(map)
+      .bindPopup('<b>Your Current Location</b>');
+
+    // Custom Destination Parking Marker ('P' badge)
+    const destMarkerIcon = L.divIcon({
+      className: 'custom-dest-marker',
+      html: `
+        <div style="background: #1e40af; border: 2.5px solid #ffffff; border-radius: 12px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; color: #ffffff; font-weight: bold; font-size: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.35);">
+          P
+        </div>
+      `,
+      iconSize: [34, 34],
+      iconAnchor: [17, 17],
+    });
+
+    L.marker(destCoords, { icon: destMarkerIcon })
+      .addTo(map)
+      .bindPopup(`<b>${spot.name}</b><br/>${spot.shortAddress}`)
+      .openPopup();
+
+    // Intermediate realistic waypoint route between user and parking
+    const midPoint = [
+      (USER_LOCATION[0] + destCoords[0]) / 2 + 0.003,
+      (USER_LOCATION[1] + destCoords[1]) / 2 - 0.002,
+    ];
+    const midPoint2 = [
+      (USER_LOCATION[0] * 0.3 + destCoords[0] * 0.7),
+      (USER_LOCATION[1] * 0.3 + destCoords[1] * 0.7) + 0.001,
+    ];
+
+    const routePoints = [USER_LOCATION, midPoint, midPoint2, destCoords];
+
+    // Casing road line
+    L.polyline(routePoints, {
+      color: '#1e3a8a',
+      weight: 8,
+      opacity: 0.9,
+      lineCap: 'round',
+      lineJoin: 'round',
+    }).addTo(map);
+
+    // Inner bright navigation polyline
+    L.polyline(routePoints, {
+      color: '#3b82f6',
+      weight: 5,
+      opacity: 1,
+      lineCap: 'round',
+      lineJoin: 'round',
+    }).addTo(map);
+
+    // Fit map view to show both points with padding
+    const bounds = L.latLngBounds([USER_LOCATION, destCoords]);
+    map.fitBounds(bounds, { padding: [60, 60] });
+
+    setRouteInfo({
+      distance: spot.distance || '2.4 km',
+      time: spot.time || '10 min',
+    });
+
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, [destCoords, spot]);
+
+  const handleRecenter = () => {
+    if (mapInstanceRef.current) {
+      const bounds = L.latLngBounds([USER_LOCATION, destCoords]);
+      mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50] });
+    }
+  };
+
+  const handleZoomIn = () => {
+    if (mapInstanceRef.current) mapInstanceRef.current.zoomIn();
+  };
+
+  const handleZoomOut = () => {
+    if (mapInstanceRef.current) mapInstanceRef.current.zoomOut();
+  };
 
   return (
-    <PhoneShell bg={false} className="relative bg-[#f4f6f9] text-[#111]">
-      {/* Turn-by-turn Navigation Map Background */}
-      <div className="absolute inset-0 overflow-hidden">
-        {/* Stylized vector GPS navigation map */}
-        <svg
-          viewBox="0 0 430 932"
-          className="w-full h-full object-cover"
-          preserveAspectRatio="xMidYMid slice"
+    <PhoneShell bg={false} className="relative overflow-hidden bg-[#e5e7eb]">
+      {/* Interactive OpenStreetMap Container */}
+      <div ref={mapContainerRef} className="absolute inset-0 w-full h-full z-0" />
+
+      {/* Top Banner — Head East (Turn-by-turn Navigation matching Figma) */}
+      <div className="absolute top-12 left-4 right-4 z-20">
+        <div
+          className="rounded-2xl p-3.5 text-white shadow-xl flex items-center justify-between"
+          style={{ background: '#0a5c36' }}
         >
-          {/* Map background blocks */}
-          <rect width="430" height="932" fill="#eef1f5" />
-          <path d="M 0,120 Q 150,140 280,100 T 430,90 L 430,0 L 0,0 Z" fill="#e4ebf3" />
-          <path d="M 50,450 Q 180,480 320,440 T 430,470 L 430,600 L 0,600 Z" fill="#e7edf5" />
-          
-          {/* Secondary streets */}
-          <path d="M -20,280 L 450,220" stroke="#ffffff" strokeWidth="14" strokeLinecap="round" />
-          <path d="M -20,380 L 450,330" stroke="#ffffff" strokeWidth="12" strokeLinecap="round" />
-          <path d="M -20,520 L 450,560" stroke="#ffffff" strokeWidth="12" strokeLinecap="round" />
-          <path d="M -20,680 L 450,640" stroke="#ffffff" strokeWidth="14" strokeLinecap="round" />
-          <path d="M 80,100 L 120,850" stroke="#ffffff" strokeWidth="12" strokeLinecap="round" />
-          <path d="M 310,80 L 290,850" stroke="#ffffff" strokeWidth="12" strokeLinecap="round" />
-          <path d="M 220,100 L 210,850" stroke="#ffffff" strokeWidth="8" strokeLinecap="round" />
-
-          {/* Thin grid roads */}
-          <path d="M 40,200 L 400,200 M 30,300 L 410,300 M 20,420 L 420,420 M 10,600 L 430,600 M 30,750 L 410,750" stroke="#e0e6ed" strokeWidth="4" />
-          <path d="M 150,150 L 150,800 M 260,150 L 260,800 M 370,150 L 370,800" stroke="#e0e6ed" strokeWidth="4" />
-
-          {/* Major Navigation Route Line (Blue/Purple) */}
-          <path
-            d="M 340,160 L 220,320 L 160,420 L 160,540 L 220,620 L 215,670 L 205,740"
-            fill="none"
-            stroke="#2f2cb8"
-            strokeWidth="11"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          {/* Route casing for contrast */}
-          <path
-            d="M 340,160 L 220,320 L 160,420 L 160,540 L 220,620 L 215,670 L 205,740"
-            fill="none"
-            stroke="#4147d5"
-            strokeWidth="7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-
-          {/* Alternate Route branches */}
-          <path d="M 160,540 L 130,540 L 130,570" fill="none" stroke="#6871e8" strokeWidth="6" strokeLinecap="round" />
-          <path d="M 220,620 L 260,620 L 260,650" fill="none" stroke="#6871e8" strokeWidth="6" strokeLinecap="round" />
-
-          {/* Turn instruction arrows on road */}
-          <g transform="translate(130, 540)">
-            <rect x="-10" y="-10" width="20" height="20" rx="4" fill="#202494" />
-            <path d="M 4,-4 L -4,-4 L -4,4 M -4,-4 L 4,4" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
-          </g>
-          <g transform="translate(260, 620)">
-            <rect x="-10" y="-10" width="20" height="20" rx="4" fill="#202494" />
-            <path d="M -4,-4 L 4,-4 L 4,4 M 4,-4 L -4,4" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
-          </g>
-
-          {/* GPS Current Location Arrow */}
-          <g transform="translate(205, 735) rotate(-25)">
-            <circle cx="0" cy="0" r="22" fill="rgba(37, 99, 235, 0.2)" />
-            <circle cx="0" cy="0" r="14" fill="#fff" filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.2))" />
-            <polygon points="0,-12 8,8 0,4 -8,8" fill="#1d4ed8" />
-          </g>
-
-          {/* Destination Marker */}
-          <g transform="translate(340, 160)">
-            <circle cx="0" cy="0" r="14" fill="#ef4444" />
-            <text x="0" y="5" textAnchor="middle" fill="#fff" fontSize="12" fontWeight="bold">P</text>
-          </g>
-        </svg>
-      </div>
-
-      {/* Top Banner — Head East (Green Navigation Card) */}
-      <div className="relative z-10 px-4 pt-12">
-        <div className="rounded-2xl p-4 bg-[#0a5c36] text-white shadow-lg flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <span className="text-3xl">⬆</span>
+          <div className="flex items-center gap-3">
+            <span className="text-2xl font-black">⬆</span>
             <div>
-              <h2 className="text-lg font-bold leading-tight">Head east</h2>
-              <p className="text-xs text-white/80">on Drive toward {spot.name}</p>
+              <h2 className="text-sm font-bold leading-tight">Head towards destination</h2>
+              <p className="text-[11px] text-white/80 truncate max-w-[200px]">{spot.name}</p>
             </div>
           </div>
-          {/* Sub-turn thumbnail */}
-          <div className="rounded-xl px-2.5 py-1.5 bg-[#074226] flex items-center gap-1.5 text-xs font-semibold">
+          <div className="rounded-xl px-2.5 py-1 bg-[#064226] flex items-center gap-1 text-[11px] font-semibold">
             <span>Then</span>
-            <span className="text-base">↰</span>
+            <span className="text-sm">↰</span>
           </div>
         </div>
       </div>
 
-      {/* Floating Right Controls (Compass, Search, Volume, Hazard) */}
-      <div className="absolute right-4 top-44 z-10 flex flex-col gap-3">
+      {/* Map Interactive Controls (Recenter, Zoom In, Zoom Out) */}
+      <div className="absolute right-4 top-36 z-20 flex flex-col gap-2">
         <button
-          aria-label="Compass"
-          className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center text-sm font-bold text-red-500"
+          type="button"
+          onClick={handleRecenter}
+          aria-label="Recenter route"
+          className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center text-sm font-bold text-gray-800 transition active:scale-95"
         >
-          🧭
+          🎯
         </button>
         <button
-          onClick={() => navigate('/search')}
-          aria-label="Search along route"
-          className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center text-gray-700"
+          type="button"
+          onClick={handleZoomIn}
+          aria-label="Zoom in"
+          className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center text-lg font-bold text-gray-800 transition active:scale-95"
         >
-          🔍
+          +
         </button>
         <button
-          aria-label="Mute"
-          className="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center text-gray-700"
+          type="button"
+          onClick={handleZoomOut}
+          aria-label="Zoom out"
+          className="w-10 h-10 rounded-full bg-white shadow-lg flex items-center justify-center text-lg font-bold text-gray-800 transition active:scale-95"
         >
-          🔊
-        </button>
-        <button
-          aria-label="Report"
-          className="rounded-full px-3 py-1.5 bg-white shadow-md flex items-center gap-1 text-xs font-semibold text-gray-800"
-        >
-          <span>⚠️</span>
-          <span>Report</span>
+          −
         </button>
       </div>
 
-      {/* Speedometer Floating Pill on Lower Left */}
-      <div className="absolute left-4 bottom-28 z-10">
-        <div className="w-12 h-12 rounded-full bg-white shadow-lg border border-gray-200 flex flex-col items-center justify-center">
-          <span className="text-sm font-bold text-gray-900 leading-none">0</span>
-          <span className="text-[8px] text-gray-500 uppercase font-semibold">km/h</span>
-        </div>
-      </div>
-
-      {/* Bottom Floating Navigation Status Card */}
-      <div className="absolute left-4 right-4 bottom-6 z-10">
-        <div className="rounded-3xl bg-white p-4 shadow-2xl flex items-center justify-between">
-          {/* Close button */}
+      {/* Bottom Floating Navigation Card */}
+      <div className="absolute left-4 right-4 bottom-6 z-20">
+        <div className="rounded-3xl bg-white p-4 shadow-2xl border border-gray-100 flex items-center justify-between">
+          {/* Close / Back button */}
           <button
+            type="button"
             onClick={() => navigate(-1)}
-            aria-label="Exit navigation"
-            className="w-11 h-11 rounded-full bg-gray-100 hover:bg-gray-200 transition flex items-center justify-center text-gray-700 text-lg font-bold"
+            aria-label="Exit directions"
+            className="w-11 h-11 rounded-full bg-gray-100 hover:bg-gray-200 transition flex items-center justify-center text-gray-700 text-base font-bold active:scale-95"
           >
             ✕
           </button>
 
           {/* Time & Distance Details */}
-          <div className="text-center">
-            <p className="text-2xl font-bold text-[#16a34a] leading-tight">
-              {spot.time || '22 min'}
+          <div className="text-center px-2">
+            <p className="text-xl font-black text-[#16a34a] leading-tight">
+              {routeInfo.time}
             </p>
             <p className="text-xs text-gray-500 font-medium mt-0.5">
-              {spot.distance || '13 km'} · 12:23 pm arrival
+              {routeInfo.distance} · {spot.name.slice(0, 18)}…
             </p>
           </div>
 
-          {/* Route alternate button */}
+          {/* Book parking slot button */}
           <button
-            onClick={() => navigate('/search')}
-            aria-label="Alternate routes"
-            className="w-11 h-11 rounded-full bg-gray-100 hover:bg-gray-200 transition flex items-center justify-center text-gray-700 text-lg font-bold"
+            type="button"
+            onClick={() => navigate(`/booking/${spot.id}`)}
+            className="px-4 py-2.5 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md transition active:scale-95"
           >
-            🔀
+            Book Slot
           </button>
         </div>
       </div>

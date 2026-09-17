@@ -1,16 +1,18 @@
 import { useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import PhoneShell from '../components/PhoneShell';
 import { PrimaryButton } from '../components/Button';
 import { useApp } from '../context/AppContext';
 
-// Matches Figma "login 19" — 4-digit OTP verification screen.
 export default function Otp() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { setIsAuthed } = useApp();
   const [digits, setDigits] = useState(['', '', '', '']);
 
-  // Four stable refs — must NOT be constructed inside an array literal to satisfy Rules of Hooks.
+  const phone = location.state?.phone || '+91 9876543210';
+
+  // Four stable refs
   const ref0 = useRef();
   const ref1 = useRef();
   const ref2 = useRef();
@@ -33,14 +35,14 @@ export default function Otp() {
 
   const handleVerify = () => {
     setIsAuthed(true);
-    navigate('/loading?next=/home&status=success&message=Verified', { replace: true });
+    navigate('/home', { replace: true });
   };
 
   return (
-    <PhoneShell className="px-6 pt-14 pb-8 items-center text-center">
+    <PhoneShell className="px-6 pt-14 pb-8 items-center text-center flex flex-col">
       <h1 className="font-display text-white text-2xl font-bold">Verify your number</h1>
-      <p className="text-white/60 text-sm mt-2 max-w-[280px]">
-        Enter the 4-digit code we sent to your phone number.
+      <p className="text-white/70 text-sm mt-2 max-w-[280px]">
+        Enter the 4-digit code sent to <span className="text-white font-semibold">{phone}</span>
       </p>
 
       <div className="flex gap-3 mt-10">
@@ -59,11 +61,17 @@ export default function Otp() {
         ))}
       </div>
 
-      <button className="text-white/70 text-sm mt-6 brand-underline">Resend code</button>
+      <button
+        type="button"
+        onClick={() => setDigits(['1', '2', '3', '4'])}
+        className="text-white/70 text-sm mt-6 brand-underline hover:text-white"
+      >
+        Resend code
+      </button>
 
       <div className="w-full mt-auto pt-10">
         <PrimaryButton disabled={!complete} onClick={handleVerify}>
-          Verify
+          Verify & Continue
         </PrimaryButton>
       </div>
     </PhoneShell>

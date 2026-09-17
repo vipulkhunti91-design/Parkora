@@ -1,5 +1,15 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useMemo, useState, useEffect } from 'react';
 import { currentUser } from '../data/mockData';
+import {
+  isFirebaseConfigured,
+  signInWithGoogleFirebase,
+  signInWithAppleFirebase,
+  signInWithTwitterFirebase,
+  loginWithEmailFirebase,
+  registerWithEmailFirebase,
+  signOutFirebase,
+  subscribeToAuthChanges,
+} from '../utils/firebase';
 
 const AppContext = createContext(null);
 
@@ -17,6 +27,14 @@ export function AppProvider({ children }) {
   const [isAuthed, setIsAuthedState] = useState(() => {
     try {
       return localStorage.getItem('parkora_isAuthed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const [isGuest, setIsGuestState] = useState(() => {
+    try {
+      return localStorage.getItem('parkora_isGuest') === 'true';
     } catch {
       return false;
     }
@@ -44,125 +62,145 @@ export function AppProvider({ children }) {
     }
   };
 
+  const setIsGuest = (guest) => {
+    setIsGuestState(guest);
+    try {
+      localStorage.setItem('parkora_isGuest', guest ? 'true' : 'false');
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // Sync with real Firebase auth state if configured
+  useEffect(() => {
+    if (!isFirebaseConfigured) return;
+    const unsubscribe = subscribeToAuthChanges((fbUser) => {
+      if (fbUser) {
+        setUser(fbUser);
+        setIsAuthed(true);
+        setIsGuest(false);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   const [booking, setBooking] = useState(null); // active/most-recent booking draft
   const [history, setHistory] = useState([]);
   const [vehicleType, setVehicleType] = useState('car'); // 'car' | 'bike'
   const [rememberMe, setRememberMe] = useState(true);
   const [language, setLanguage] = useState('en');
 
-  // Normal login: validates username/email/phone & password against registered users or mock user
-  const login = (identifier, password) => {
+  // 1. Google Login via Real Firebase OAuth
+  const loginWithGoogle = async () => {
+    const fbUser = await signInWithGoogleFirebase();
+    setUser(fbUser);
+    setIsAuthed(true);
+    setIsGuest(false);
+    return fbUser;
+  };
+
+  // 2. Apple Login via Real Firebase OAuth
+  const loginWithApple = async () => {
+    const fbUser = await signInWithAppleFirebase();
+    setUser(fbUser);
+    setIsAuthed(true);
+    setIsGuest(false);
+    return fbUser;
+  };
+
+  // 3. Twitter Login via Real Firebase OAuth
+  const loginWithTwitter = async () => {
+    const fbUser = await signInWithTwitterFirebase();
+    setUser(fbUser);
+    setIsAuthed(true);
+    setIsGuest(false);
+    return fbUser;
+  };
+
+  // 4. Email/Password Login
+  const login = async (identifier, password) => {
     if (!identifier?.trim() || !password?.trim()) {
-      return { success: false, message: 'Please enter both your email/phone and password.' };
+      throw new Error('Please enter both your email/phone and password.');
     }
 
-    const cleanId = identifier.trim().toLowerCase();
-    
-    // Load registered users from localStorage
-    let users = [];
-    try {
-      const savedUsers = localStorage.getItem('parkora_registered_users');
-      users = savedUsers ? JSON.parse(savedUsers) : [];
-    } catch (e) {
-      console.error(e);
-    }
+    const cleanId = identifier.trim();
 
-    // Check against registered users
-    const matchedUser = users.find(
-      (u) =>
-        (u.email && u.email.toLowerCase() === cleanId) ||
-        (u.phone && u.phone.replace(/\D/g, '') === cleanId.replace(/\D/g, '')) ||
-        (u.name && u.name.toLowerCase() === cleanId)
-    );
-
-    if (matchedUser) {
-      if (matchedUser.password === password) {
-        setUser(matchedUser);
-        setIsAuthed(true);
-        return { success: true };
-      }
-      return { success: false, message: 'Incorrect password. Please try again.' };
-    }
-
-    // Default mock user credentials check (Sana Mehta)
-    const isMockMatch =
-      cleanId === currentUser.phone ||
-      cleanId === currentUser.email.toLowerCase() ||
-      cleanId.includes('sana') ||
-      cleanId === '9876543210';
-
-    if (isMockMatch) {
-      // Allow demo password 'password', '123456', or any 4+ char password for mock user
-      setUser(currentUser);
+    // If Firebase is configured and identifier is an email, use real Firebase auth
+    if (isFirebaseConfigured && cleanId.includes('@')) {
+      const fbUser = await loginWithEmailFirebase(cleanId, password);
+      setUser(fbUser);
       setIsAuthed(true);
-      return { success: true };
+      setIsGuest(false);
+      return fbUser;
     }
 
-    return {
-      success: false,
-      message: 'Account not found with this phone or email. Please sign up first.',
-    };
+    // Otherwise, if phone number or Firebase not yet connected, validate credentials
+    if (!isFirebaseConfigured) {
+      throw new Error(
+        'Firebase Authentication is not configured. Please add your VITE_FIREBASE_API_KEY in .env, or use "Skip" to continue as a guest.'
+      );
+    }
+
+    // Phone / identifier check
+    throw new Error('Please enter a valid email address registered with Firebase.');
   };
 
-  // Sign up: validates required fields, creates account, saves to localStorage & logs in
-  const register = (userData) => {
+  // 5. Sign Up with Email/Password & Name
+  const register = async (userData) => {
     const { name, phone, email, password } = userData;
-    if (!name?.trim()) return { success: false, message: 'Please enter your full name.' };
-    if (!phone?.trim()) return { success: false, message: 'Please enter your phone number.' };
+    if (!name?.trim()) throw new Error('Please enter your full name.');
+    if (!email?.trim() || !email.includes('@')) {
+      throw new Error('Please enter a valid email address.');
+    }
     if (!password || password.length < 6) {
-      return { success: false, message: 'Password must be at least 6 characters.' };
+      throw new Error('Password must be at least 6 characters.');
     }
 
-    const newUser = {
-      id: `u_${Date.now()}`,
-      name: name.trim(),
-      phone: phone.trim(),
-      email: email?.trim() || '',
-      password,
+    if (!isFirebaseConfigured) {
+      throw new Error(
+        'Firebase Authentication is not configured. Please add your VITE_FIREBASE_API_KEY in .env, or use "Skip" to continue as a guest.'
+      );
+    }
+
+    const fbUser = await registerWithEmailFirebase(email.trim(), password, name.trim(), phone?.trim());
+    setUser(fbUser);
+    setIsAuthed(true);
+    setIsGuest(false);
+    return fbUser;
+  };
+
+  // 6. Guest Mode for Skip Button
+  const skipAsGuest = () => {
+    const guestUser = {
+      id: 'guest',
+      name: 'Guest User',
+      email: 'guest@parkora.app',
+      phone: '',
       picture: null,
-      vehicle: { type: 'car', plate: 'GJ 01 AB 1234' },
-      createdAt: new Date().toISOString(),
+      isGuest: true,
     };
+    setUser(guestUser);
+    setIsAuthed(true);
+    setIsGuest(true);
+  };
 
+  // 7. Logout
+  const logout = async () => {
     try {
-      const savedUsers = localStorage.getItem('parkora_registered_users');
-      const users = savedUsers ? JSON.parse(savedUsers) : [];
-      users.push(newUser);
-      localStorage.setItem('parkora_registered_users', JSON.stringify(users));
+      await signOutFirebase();
     } catch (e) {
-      console.error(e);
+      console.warn('Firebase signout:', e);
     }
-
-    setUser(newUser);
-    setIsAuthed(true);
-    return { success: true };
-  };
-
-  // Google login: saves Google account details and logs in
-  const loginWithGoogle = (googleUserData) => {
-    const googleUser = {
-      id: googleUserData.id || `google_${Date.now()}`,
-      name: googleUserData.name || 'Google User',
-      email: googleUserData.email || '',
-      picture: googleUserData.picture || null,
-      phone: currentUser.phone,
-      vehicle: currentUser.vehicle,
-      provider: 'google',
-    };
-
-    setUser(googleUser);
-    setIsAuthed(true);
-    return { success: true };
-  };
-
-  const logout = () => {
     setIsAuthed(false);
+    setIsGuest(false);
     try {
       localStorage.removeItem('parkora_isAuthed');
+      localStorage.removeItem('parkora_isGuest');
       localStorage.removeItem('parkora_user');
     } catch (e) {
       console.error(e);
     }
+    setUser(currentUser);
   };
 
   const value = useMemo(
@@ -171,9 +209,13 @@ export function AppProvider({ children }) {
       setUser,
       isAuthed,
       setIsAuthed,
+      isGuest,
+      skipAsGuest,
       login,
       register,
       loginWithGoogle,
+      loginWithApple,
+      loginWithTwitter,
       logout,
       booking,
       setBooking,
@@ -185,8 +227,9 @@ export function AppProvider({ children }) {
       setRememberMe,
       language,
       setLanguage,
+      isFirebaseConfigured,
     }),
-    [user, isAuthed, booking, history, vehicleType, rememberMe, language]
+    [user, isAuthed, isGuest, booking, history, vehicleType, rememberMe, language]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
