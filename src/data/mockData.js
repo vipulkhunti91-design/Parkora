@@ -68,7 +68,7 @@ export const parkingSpots = [
     reviews: '5.2K',
     status: 'OPEN',
     hours: '24 Hours',
-    photo: 'https://images.unsplash.com/photo-1590674899484-13d6c6e3f8e6?w=600&q=60',
+    photo: 'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?w=600&q=80',
     security: { guard: 'Amit Shah', guardPhone: '9898989898', officeNumber: '8741265982' },
     amenities: [
       { label: 'CCTV Cameras', ok: true },
