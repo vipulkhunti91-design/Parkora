@@ -47,13 +47,21 @@ export { auth };
 // Helper to format Firebase user into Parkora user profile
 export function formatFirebaseUser(user) {
   if (!user) return null;
+  const rawProvider = user.providerData?.[0]?.providerId || '';
+  const provider = rawProvider.includes('google')
+    ? 'google'
+    : rawProvider.includes('apple')
+    ? 'apple'
+    : rawProvider.includes('twitter')
+    ? 'twitter'
+    : 'password';
   return {
     id: user.uid,
     name: user.displayName || user.email?.split('@')[0] || 'User',
     email: user.email || '',
     phone: user.phoneNumber || '',
     picture: user.photoURL || null,
-    provider: user.providerData?.[0]?.providerId || 'password',
+    provider,
   };
 }
 
@@ -61,7 +69,7 @@ export function formatFirebaseUser(user) {
 export async function signInWithGoogleFirebase() {
   if (!isFirebaseConfigured || !auth) {
     throw new Error(
-      'Firebase is not configured. Please add your Firebase credentials (VITE_FIREBASE_API_KEY, VITE_FIREBASE_PROJECT_ID, etc.) in .env'
+      'Firebase is not configured. Please add your Firebase credentials (VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, VITE_FIREBASE_PROJECT_ID) in .env'
     );
   }
   const provider = new GoogleAuthProvider();

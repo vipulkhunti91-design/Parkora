@@ -10,6 +10,9 @@ export default function ProfileEdit() {
   const { user, setUser } = useApp();
   const [form, setForm] = useState({ ...user });
 
+  const [imgFailed, setImgFailed] = useState(false);
+  const avatarUrl = !imgFailed && (user?.picture || user?.photo);
+
   const update = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const handleSave = (e) => {
@@ -35,10 +38,20 @@ export default function ProfileEdit() {
       <div className="flex justify-center mt-6">
         <div className="relative">
           <div
-            className="rounded-full flex items-center justify-center text-3xl"
+            className="rounded-full flex items-center justify-center text-3xl overflow-hidden"
             style={{ width: 88, height: 88, background: 'var(--color-panel)' }}
           >
-            🙂
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={user?.name || 'Profile'}
+                referrerPolicy="no-referrer"
+                onError={() => setImgFailed(true)}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span>{user?.name ? user.name.charAt(0).toUpperCase() : '🙂'}</span>
+            )}
           </div>
           <span
             className="absolute bottom-0 right-0 flex items-center justify-center rounded-full"

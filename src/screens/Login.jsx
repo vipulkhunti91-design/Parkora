@@ -59,6 +59,12 @@ export default function Login() {
       let msg = err.message || `${provider} sign-in was cancelled or failed.`;
       if (err.code === 'auth/popup-closed-by-user') {
         msg = 'Sign-in popup was closed before completing.';
+      } else if (err.code === 'auth/popup-blocked') {
+        msg = 'Sign-in popup was blocked by your browser. Please allow popups for this site.';
+      } else if (err.code === 'auth/unauthorized-domain') {
+        msg = 'This domain is not authorized in Firebase. Please add it to Authorized Domains in the Firebase Console.';
+      } else if (err.code === 'auth/operation-not-allowed') {
+        msg = `${provider} sign-in is not enabled in Firebase Console. Please enable it under Authentication > Sign-in method.`;
       } else if (err.code === 'auth/cancelled-popup-request') {
         msg = 'Only one sign-in window can be open at a time.';
       }

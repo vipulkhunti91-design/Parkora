@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PhoneShell from '../components/PhoneShell';
 import BottomNav from '../components/BottomNav';
@@ -15,13 +16,14 @@ const ROWS = [
 export default function Profile() {
   const navigate = useNavigate();
   const { user, logout } = useApp();
+  const [imgFailed, setImgFailed] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/login', { replace: true });
   };
 
-  const avatarUrl = user?.picture || user?.photo;
+  const avatarUrl = !imgFailed && (user?.picture || user?.photo);
 
   return (
     <PhoneShell>
@@ -36,12 +38,10 @@ export default function Profile() {
               alt={user.name || 'Profile'}
               className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
-              onError={(e) => {
-                e.target.style.display = 'none';
-              }}
+              onError={() => setImgFailed(true)}
             />
           ) : (
-            <span>🙂</span>
+            <span>{user?.name ? user.name.charAt(0).toUpperCase() : '🙂'}</span>
           )}
         </div>
         <div className="min-w-0">

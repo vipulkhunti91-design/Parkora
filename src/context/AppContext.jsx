@@ -90,72 +90,46 @@ export function AppProvider({ children }) {
   const [rememberMe, setRememberMe] = useState(true);
   const [language, setLanguage] = useState('en');
 
-  // 1. Google Login via Real Firebase OAuth (with fallback if credentials not yet in .env)
+  // 1. Google Login via Real Firebase OAuth (Popup on accounts.google.com)
   const loginWithGoogle = async () => {
-    if (isFirebaseConfigured) {
-      const fbUser = await signInWithGoogleFirebase();
-      setUser(fbUser);
-      setIsAuthed(true);
-      setIsGuest(false);
-      return fbUser;
+    if (!isFirebaseConfigured) {
+      throw new Error(
+        'Firebase configuration is missing. Please add VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, and VITE_FIREBASE_PROJECT_ID to your .env file.'
+      );
     }
-
-    // Seamless Google sign-in fallback when Firebase keys are not yet added
-    const googleUser = {
-      id: `google_${Date.now()}`,
-      name: 'Google User',
-      email: 'user@gmail.com',
-      picture: null,
-      provider: 'google',
-    };
-    setUser(googleUser);
+    const fbUser = await signInWithGoogleFirebase();
+    setUser(fbUser);
     setIsAuthed(true);
     setIsGuest(false);
-    return googleUser;
+    return fbUser;
   };
 
-  // 2. Apple Login
+  // 2. Apple Login via Firebase OAuth
   const loginWithApple = async () => {
-    if (isFirebaseConfigured) {
-      const fbUser = await signInWithAppleFirebase();
-      setUser(fbUser);
-      setIsAuthed(true);
-      setIsGuest(false);
-      return fbUser;
+    if (!isFirebaseConfigured) {
+      throw new Error(
+        'Firebase configuration is missing. Please add VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, and VITE_FIREBASE_PROJECT_ID to your .env file.'
+      );
     }
-    const appleUser = {
-      id: `apple_${Date.now()}`,
-      name: 'Apple User',
-      email: 'user@icloud.com',
-      picture: null,
-      provider: 'apple',
-    };
-    setUser(appleUser);
+    const fbUser = await signInWithAppleFirebase();
+    setUser(fbUser);
     setIsAuthed(true);
     setIsGuest(false);
-    return appleUser;
+    return fbUser;
   };
 
-  // 3. Twitter Login
+  // 3. Twitter Login via Firebase OAuth
   const loginWithTwitter = async () => {
-    if (isFirebaseConfigured) {
-      const fbUser = await signInWithTwitterFirebase();
-      setUser(fbUser);
-      setIsAuthed(true);
-      setIsGuest(false);
-      return fbUser;
+    if (!isFirebaseConfigured) {
+      throw new Error(
+        'Firebase configuration is missing. Please add VITE_FIREBASE_API_KEY, VITE_FIREBASE_AUTH_DOMAIN, and VITE_FIREBASE_PROJECT_ID to your .env file.'
+      );
     }
-    const twitterUser = {
-      id: `twitter_${Date.now()}`,
-      name: 'Twitter User',
-      email: 'user@x.com',
-      picture: null,
-      provider: 'twitter',
-    };
-    setUser(twitterUser);
+    const fbUser = await signInWithTwitterFirebase();
+    setUser(fbUser);
     setIsAuthed(true);
     setIsGuest(false);
-    return twitterUser;
+    return fbUser;
   };
 
   // 4. Email/Password Login

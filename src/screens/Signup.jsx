@@ -2,17 +2,51 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import PhoneShell from '../components/PhoneShell';
 import { PrimaryButton, TextField } from '../components/Button';
+import { IconGoogle, IconApple, IconTwitter } from '../components/icons';
 import { useApp } from '../context/AppContext';
 
 export default function Signup() {
   const navigate = useNavigate();
-  const { register, skipAsGuest } = useApp();
+  const { register, loginWithGoogle, loginWithApple, loginWithTwitter, skipAsGuest } = useApp();
   const [form, setForm] = useState({ name: '', phone: '', email: '', password: '', confirm: '' });
   const [agree, setAgree] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState(false);
 
   const update = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+
+  const handleOAuth = async (provider) => {
+    setError('');
+    setOauthLoading(true);
+    try {
+      if (provider === 'google') {
+        await loginWithGoogle();
+      } else if (provider === 'apple') {
+        await loginWithApple();
+      } else if (provider === 'twitter') {
+        await loginWithTwitter();
+      }
+      navigate('/home', { replace: true });
+    } catch (err) {
+      console.error(`${provider} sign-in error:`, err);
+      let msg = err.message || `${provider} sign-in was cancelled or failed.`;
+      if (err.code === 'auth/popup-closed-by-user') {
+        msg = 'Sign-in popup was closed before completing.';
+      } else if (err.code === 'auth/popup-blocked') {
+        msg = 'Sign-in popup was blocked by your browser. Please allow popups for this site.';
+      } else if (err.code === 'auth/unauthorized-domain') {
+        msg = 'This domain is not authorized in Firebase. Please add it to Authorized Domains in the Firebase Console.';
+      } else if (err.code === 'auth/operation-not-allowed') {
+        msg = `${provider} sign-in is not enabled in Firebase Console. Please enable it under Authentication > Sign-in method.`;
+      } else if (err.code === 'auth/cancelled-popup-request') {
+        msg = 'Only one sign-in window can be open at a time.';
+      }
+      setError(msg);
+    } finally {
+      setOauthLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -132,12 +166,53 @@ export default function Signup() {
           I agree to the Terms of Service and Privacy Policy
         </label>
 
-        <PrimaryButton type="submit" disabled={submitting} className="mt-2">
+        <PrimaryButton type="submit" disabled={submitting || oauthLoading} className="mt-2">
           {submitting ? 'Creating account…' : 'Sign Up'}
         </PrimaryButton>
       </form>
 
-      <p className="text-center text-white/70 text-sm mt-8">
+      <div className="flex items-center gap-3 my-6">
+        <div className="h-px flex-1 bg-white/20" />
+        <span className="text-white/60 text-xs">or continue with</span>
+        <div className="h-px flex-1 bg-white/20" />
+      </div>
+
+      <div className="flex items-center justify-center gap-4">
+        {/* Google OAuth */}
+        <button
+          type="button"
+          onClick={() => handleOAuth('google')}
+          disabled={oauthLoading || submitting}
+          className="w-12 h-12 rounded-2xl flex items-center justify-center bg-white transition active:scale-95 disabled:opacity-50"
+          aria-label="Continue with Google"
+        >
+          <IconGoogle className="text-black" />
+        </button>
+
+        {/* Apple OAuth */}
+        <button
+          type="button"
+          onClick={() => handleOAuth('apple')}
+          disabled={oauthLoading || submitting}
+          className="w-12 h-12 rounded-2xl flex items-center justify-center bg-white transition active:scale-95 disabled:opacity-50"
+          aria-label="Continue with Apple"
+        >
+          <IconApple className="text-black" />
+        </button>
+
+        {/* Twitter / X OAuth */}
+        <button
+          type="button"
+          onClick={() => handleOAuth('twitter')}
+          disabled={oauthLoading || submitting}
+          className="w-12 h-12 rounded-2xl flex items-center justify-center bg-white transition active:scale-95 disabled:opacity-50"
+          aria-label="Continue with Twitter"
+        >
+          <IconTwitter className="text-black" />
+        </button>
+      </div>
+
+      <p className="text-center text-white/70 text-sm mt-6">
         Already have an account?{' '}
         <Link to="/login" className="text-white font-semibold brand-underline">
           Log in
