@@ -1,4 +1,5 @@
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { AppProvider, useApp } from './context/AppContext';
 
 import Onboarding from './screens/Onboarding';
@@ -78,6 +79,7 @@ export default function App() {
       <HashRouter>
         <AppRoutes />
       </HashRouter>
+      <Analytics />
     </AppProvider>
   );
 }
