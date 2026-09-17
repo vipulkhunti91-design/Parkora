@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+
+  /* Parkora / PARK ORAA design tokens, extracted from Figma */
+  --color-navy-950: #031b32;   /* gradient top */
+  --color-navy-900: #052442;   /* button label / text-on-white */
+  --color-blue-700: #125495;   /* gradient bottom / active nav pill */
+  --color-blue-accent: #366add; /* logo underline accent */
+  --color-panel: rgba(120, 155, 202, 0.2);
+  --color-panel-strong: rgba(120, 155, 202, 0.25);
+  --color-navbar: rgba(5, 33, 61, 0.8);
+  --color-muted: #606060;
+  --color-good: #33cc6a;
+  --color-bad: #ff5050;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: #04101f;
+  -webkit-tap-highlight-color: transparent;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* App frame: centers the phone-width screen on desktop, full-bleed on mobile */
+.app-shell {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  position: relative;
+  background: linear-gradient(180deg, var(--color-navy-950) 8%, var(--color-blue-700) 92%);
+  overflow-x: hidden;
+  box-shadow: 0 0 60px rgba(0,0,0,0.5);
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+.brand-underline {
+  text-decoration: underline;
+  text-decoration-color: var(--color-blue-accent);
+  text-underline-offset: 3px;
+}
