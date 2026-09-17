@@ -1,7 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 
-import Splash from './screens/Splash';
 import Onboarding from './screens/Onboarding';
 import Login from './screens/Login';
 import Signup from './screens/Signup';
@@ -39,8 +38,7 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Onboarding / auth flow */}
-      <Route path="/" element={<Splash />} />
-      <Route path="/onboarding" element={<Onboarding />} />
+      <Route path="/" element={<Onboarding />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/otp" element={<Otp />} />
@@ -77,9 +75,9 @@ function AppRoutes() {
 export default function App() {
   return (
     <AppProvider>
-      <BrowserRouter>
+      <HashRouter>
         <AppRoutes />
-      </BrowserRouter>
+      </HashRouter>
     </AppProvider>
   );
 }

@@ -27,7 +27,18 @@ export default function Login() {
   };
 
   return (
-    <PhoneShell className="px-6 pt-16 pb-8 overflow-y-auto no-scrollbar">
+    <PhoneShell className="px-6 pt-10 pb-8 overflow-y-auto no-scrollbar">
+      {/* Skip button */}
+      <div className="flex justify-end mb-4">
+        <button
+          type="button"
+          onClick={() => { setIsAuthed(true); navigate('/home', { replace: true }); }}
+          className="text-white/80 text-sm font-semibold px-4 py-1.5 rounded-full border border-white/30 hover:bg-white/10 transition"
+        >
+          Skip →
+        </button>
+      </div>
+
       <h1 className="text-white font-bold text-2xl" style={{ fontFamily: 'var(--font-display)' }}>
         Welcome back
       </h1>

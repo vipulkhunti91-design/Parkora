@@ -63,7 +63,8 @@ export default function PaymentMethod() {
           </div>
         </div>
 
-        <p className="text-white/70 text-sm mt-6 mb-2">Choose a payment method</p>
+        <h2 className="text-white font-display font-bold text-lg mt-5">Which Way Used For Pay</h2>
+        <p className="text-white/60 text-xs mt-1 mb-4">Choose the payment you'd like to use</p>
         <div className="flex flex-col gap-2">
           {paymentMethods.map((m) => {
             const active = selected === m.id;
@@ -94,7 +95,7 @@ export default function PaymentMethod() {
       </div>
 
       <div className="pt-6 shrink-0">
-        <PrimaryButton onClick={handlePay}>Pay ₹{booking.total}</PrimaryButton>
+        <PrimaryButton onClick={handlePay}>Continue</PrimaryButton>
       </div>
     </PhoneShell>
   );

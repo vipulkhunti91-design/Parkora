@@ -26,6 +26,8 @@ body {
   font-family: var(--font-sans);
   background: #04101f;
   -webkit-tap-highlight-color: transparent;
+  /* Safe area for notched phones (iPhone X+, Android punch-hole) */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 * {

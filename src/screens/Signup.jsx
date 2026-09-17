@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import PhoneShell from '../components/PhoneShell';
 import { PrimaryButton, TextField } from '../components/Button';
+import { useApp } from '../context/AppContext';
 
 export default function Signup() {
   const navigate = useNavigate();
+  const { setIsAuthed } = useApp();
   const [form, setForm] = useState({ name: '', phone: '', email: '', password: '', confirm: '' });
   const [agree, setAgree] = useState(false);
   const [error, setError] = useState('');
@@ -30,7 +32,18 @@ export default function Signup() {
   };
 
   return (
-    <PhoneShell className="px-6 pt-14 pb-8 overflow-y-auto no-scrollbar">
+    <PhoneShell className="px-6 pt-10 pb-8 overflow-y-auto no-scrollbar">
+      {/* Skip button */}
+      <div className="flex justify-end mb-4">
+        <button
+          type="button"
+          onClick={() => { setIsAuthed(true); navigate('/home', { replace: true }); }}
+          className="text-white/80 text-sm font-semibold px-4 py-1.5 rounded-full border border-white/30 hover:bg-white/10 transition"
+        >
+          Skip →
+        </button>
+      </div>
+
       <h1 className="text-white font-bold text-2xl" style={{ fontFamily: 'var(--font-display)' }}>
         Create your account
       </h1>

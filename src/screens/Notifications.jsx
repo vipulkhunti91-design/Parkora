@@ -17,7 +17,7 @@ export default function Notifications() {
         >
           <IconArrowLeft className="text-white" />
         </button>
-        <h1 className="text-white font-display font-bold text-lg">Notifications</h1>
+        <h1 className="text-white font-display font-bold text-lg">Notification</h1>
       </div>
 
       {notifications.length === 0 ? (
